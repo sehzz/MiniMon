@@ -56,20 +56,5 @@ def check_system_stats(conf: dict):
 
     return entries
     
-    
-    
-
-    
-
-
-
-    return
-
-
-
-
-
-
-
 if __name__ == "__main__":
     run()
