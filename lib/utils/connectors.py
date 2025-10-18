@@ -67,15 +67,17 @@ class URLCaller(BaseModel):
         request_args = {
             "url": url,
             "verify": self.verify,
+            "headers": self.headers,
             **extra,
         }
 
-        if verb == "post":
-            fun = requests.post
-        elif verb == "get":
+        verb = verb.lower()
+        if verb == "get":
             fun = requests.get
+        elif verb == "post":
+            fun = requests.post
         elif verb == "put":
-            fun = requests.put()
+            fun = requests.put
         else:
             raise ValueError(f"Unsupported HTTP verb: {verb}")
         
