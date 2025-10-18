@@ -1,4 +1,4 @@
-from lib.utils.connectors import URLCaller, URLCallerResult
+from lib.utils.connectors import URLCaller
 from lib.utils.environment import get_conf_for, is_server
 from lib.service.Service import Service_Status, ServiceEntry, Service_PerformanceData
 from lib.service.spool_generator import generate_service_response, write_spool_file

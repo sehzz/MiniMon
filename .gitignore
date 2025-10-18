@@ -2,4 +2,3 @@ conf/*
 app.log
 .vscode/
 **/__pycache__
-check_system_stats.py
