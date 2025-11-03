@@ -1,4 +1,5 @@
 conf/*
+resources/*
 app.log
 .vscode/
 **/__pycache__

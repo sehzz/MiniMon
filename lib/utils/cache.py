@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 from pydantic import BaseModel
-from config import KEY_DIR
+from config import KEY_DIR, RESOURSES_DIR
 from lib.utils.log import logger
 
 log = logger.get_logger()
@@ -11,9 +11,13 @@ log = logger.get_logger()
 class JSONFileCache(BaseModel):
     name: str
 
+# timestamp format: "%Y-%m-%d %H:%M:%S"
 
-    def save_key(self, data, save_raw: bool = False) -> None:
-        path = KEY_DIR.joinpath(self.name)
+    def save(self, data, save_raw: bool = False, is_key: bool = False) -> None:
+        path = RESOURSES_DIR.joinpath(self.name)
+        if is_key:
+            path = KEY_DIR.joinpath(self.name)
+        
         
         if save_raw:
             cache_data = data
@@ -27,7 +31,7 @@ class JSONFileCache(BaseModel):
             json.dump(cache_data, f, indent=4, ensure_ascii=False)
             log.info(f"File saved in {path}")
 
-    def retreive(self):
+    def retreive(self, is_key: bool = False):
         """
         Retrieve data from JSON cache file.
 
@@ -37,7 +41,10 @@ class JSONFileCache(BaseModel):
         """
         timestamp = None
         content = None
-        path = KEY_DIR.joinpath(self.name)
+        path = RESOURSES_DIR.joinpath(self.name)
+        if is_key:
+            path = KEY_DIR.joinpath(self.name)
+        
         try:
             with open(path, "r", encoding="utf-8") as f:
                 content = json.load(f)["data"]
