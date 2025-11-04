@@ -11,12 +11,22 @@ from lib.utils.log import logger
 
 log = logger.get_logger()
 
-TOKEN_PATH = KEY_DIR.joinpath("sehaj_access_token_60_min")
 MONMINI_TOKEN_PATH = KEY_DIR.joinpath("monmimi_access_token_60_min")
+MONMINI_TOKEN_KEY = "monmimi_access_token_60_min"
 
 
+def get_acces_token() -> str:
+    """
+    Get access token for API calls, using cached token if valid. Otherwise, fetch a new token and cache it.
 
-def get_acces_token():
+    Returns:
+        str: Access token.
+    """
+    cache = JSONFileCache(name=MONMINI_TOKEN_KEY, is_key=True)
+    if cache.is_valid:
+        token_data = cache.retreive().get("data")
+        return token_data
+
     conf = get_conf_for("supabase")
     base_url = conf.get("base_url")
     access_token_endpoint = conf.get("access_token_endpoint")
@@ -39,27 +49,29 @@ def get_acces_token():
     url_caller = URLCaller(headers=headers)
     result = url_caller.perform_single_call(url=url, verb="post", json= body)
     data = result.json
-    cache = JSONFileCache(name="monmimi_access_token_60_min")
-    cache.save(data["access_token"], is_key=True)
+    cache.save(data["access_token"])
     
     return data["access_token"]
 
+def get_transaction_data() -> None:
+    """
+    Fetch transaction data from database and cache it.
 
-def get_transaction_data():
+    Returns:
+        None
+    """
     conf = get_conf_for("supabase")
     base_url = conf.get("base_url")
 
     url = f"{base_url}/rest/v1/new_transactions"
     api_key = conf.get("api_key")
 
-    token = JSONFileCache(name="monmimi_access_token_60_min")
-    token_data = token.retreive(is_key=True).get("data")
-
+    token = get_acces_token()
 
     headers = {
         "apikey": api_key,
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {token_data}"
+        "Authorization": f"Bearer {token}"
     }
 
     url_caller = URLCaller(headers=headers)
@@ -71,12 +83,17 @@ def get_transaction_data():
 def get_current_week_data():
     """Get transactions from the current week (Monday to Sunday)."""
 
-    cache = JSONFileCache(name="transaction_data.json").retreive()
-    transaction_data = cache.get("data")
+    cache = JSONFileCache(name="transaction_data.json")
+
+    if not cache.is_valid:
+        log.debug("Cache is old, fetching new transaction data.")
+        get_transaction_data()
+        
+    transaction_data = cache.retreive().get("data")
 
     items_this_week = []
-    # now = datetime.now(timezone.utc)
-    now = datetime(2025, 10, 28, 21, 58, 19, tzinfo=timezone.utc)
+    now = datetime.now(timezone.utc)
+    # now = datetime(2025, 10, 28, 21, 58, 19, tzinfo=timezone.utc)
     days_since_monday = now.weekday()
     start_of_week = now - timedelta(days=days_since_monday)
     start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -88,13 +105,10 @@ def get_current_week_data():
         if start_of_week <= created_at_dt < end_of_week:
             items_this_week.append(data)
 
-    log.debug(items_this_week)
     return items_this_week
-
-
-
+   
 
 if __name__ == "__main__":
     # get_acces_token()
     # get_transaction_data()
-    get_current_week_data()
+    # get_current_week_data()

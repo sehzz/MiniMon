@@ -1,6 +1,6 @@
 import json
 
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from pydantic import BaseModel
 from config import KEY_DIR, RESOURSES_DIR
@@ -8,16 +8,41 @@ from lib.utils.log import logger
 
 log = logger.get_logger()
 
+KEY_TIME_THRESHOLD_MINUTES = 30
+CACHE_TIME_THRESHOLD_HOURS = 24
+
 class JSONFileCache(BaseModel):
     name: str
+    is_key: bool = False
 
-# timestamp format: "%Y-%m-%d %H:%M:%S"
+    @property
+    def path(self) -> Path:
+        """Return the full path to the cache file based on whether it's a key or not."""
 
-    def save(self, data, save_raw: bool = False, is_key: bool = False) -> None:
-        path = RESOURSES_DIR.joinpath(self.name)
-        if is_key:
-            path = KEY_DIR.joinpath(self.name)
+        base_dir = KEY_DIR if self.is_key else RESOURSES_DIR
+        return base_dir.joinpath(self.name)
+
+    @property
+    def is_valid(self) -> bool:
+        """Check if the cached data is still valid based on timestamp."""
         
+        cache_ts = self.get_cache_timestamp()
+        
+        file_dt_utc = datetime.fromisoformat(cache_ts).replace(tzinfo=timezone.utc)
+
+        threshold = timedelta(hours=CACHE_TIME_THRESHOLD_HOURS)
+        if self.is_key:
+            threshold = timedelta(minutes=KEY_TIME_THRESHOLD_MINUTES)
+
+        if datetime.now(timezone.utc) - file_dt_utc < threshold:
+            log.info(f"Cache '{self.name}' is valid. Reading from {self.path}")
+            return True
+
+        log.warning(f"Cache '{self.name}' is expired.")
+        return False
+    
+    def save(self, data, save_raw: bool = False) -> None:
+        path = self.path
         
         if save_raw:
             cache_data = data
@@ -31,7 +56,7 @@ class JSONFileCache(BaseModel):
             json.dump(cache_data, f, indent=4, ensure_ascii=False)
             log.info(f"File saved in {path}")
 
-    def retreive(self, is_key: bool = False):
+    def retreive(self):
         """
         Retrieve data from JSON cache file.
 
@@ -39,18 +64,12 @@ class JSONFileCache(BaseModel):
             dict: {"timestamp": str, "data": dict} if successfully loaded,
                     else {"timestamp": None, "data": None}.
         """
-        timestamp = None
-        content = None
-        path = RESOURSES_DIR.joinpath(self.name)
-        if is_key:
-            path = KEY_DIR.joinpath(self.name)
+        content = {}
+        path = self.path
         
         try:
             with open(path, "r", encoding="utf-8") as f:
-                content = json.load(f)["data"]
-            #Todo: create a function to pass timestame
-            #Todo: modify reterive to pass data and timestamp
-                timestamp = "NOT IMPLEMENTED"
+                content = json.load(f)
 
         except(OSError, IOError) as e:
             log.error("Failed to read cache file '%s': '%s'", path, e)
@@ -59,7 +78,11 @@ class JSONFileCache(BaseModel):
             log.error("Cache file '%s' is not JSON serialized", self.name)
         
         return {
-                "timestamp": timestamp,
-                "data": content
+                "timestamp": content.get("timestamp"),
+                "data": content.get("data")
             }
 
+    def get_cache_timestamp(self):
+        """Get the timestamp of when the cache was last saved."""
+
+        return self.retreive().get("timestamp")
