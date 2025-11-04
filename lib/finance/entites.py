@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from pydantic import BaseModel
 from enum import Enum
 
@@ -48,10 +49,10 @@ class Transaction(BaseModel):
     id: int
     description: str
     amount: float
-    transaction_date: datetime
-    category_id: Category
-    created_at: datetime
-    user_id: str
+    transaction_date: str
+    category_id: int
+    created_at: str
+    user_id: Optional[str] = None
 
 
 #TODO make default functions to get table data from supabase and store them as obj(Transaction)

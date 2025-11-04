@@ -65,44 +65,36 @@ def get_transaction_data():
     url_caller = URLCaller(headers=headers)
     result = url_caller.perform_single_call(url=url, verb="get")
     data = result.json
-    get_current_week_data(data)
-    
+    cache = JSONFileCache(name="transaction_data.json")
+    cache.save(data) 
 
-def get_current_week_data(data):
+def get_current_week_data():
     """Get transactions from the current week (Monday to Sunday)."""
 
-    # now = datetime(2025, 10, 28, 21, 58, 19, tzinfo=timezone.utc)
-    now = datetime.now(timezone.utc)
+    cache = JSONFileCache(name="transaction_data.json").retreive()
+    transaction_data = cache.get("data")
+
+    items_this_week = []
+    # now = datetime.now(timezone.utc)
+    now = datetime(2025, 10, 28, 21, 58, 19, tzinfo=timezone.utc)
     days_since_monday = now.weekday()
     start_of_week = now - timedelta(days=days_since_monday)
     start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
     end_of_week = start_of_week + timedelta(days=7)
 
-    print(f"Current Week Range:")
-    print(f"- Start (Mon): {start_of_week.isoformat()}") # 2025-11-03T00:00:00+00:00
-    print(f"- End (Next Mon): {end_of_week.isoformat()}") # 2025-11-10T00:00:00+00:00
-    print("-" * 30)
+    for item in transaction_data:
+        data = Transaction(**item)
+        created_at_dt = datetime.strptime(data.created_at, "%Y-%m-%dT%H:%M:%S.%f%z")
+        if start_of_week <= created_at_dt < end_of_week:
+            items_this_week.append(data)
 
-
-    items_this_week = []
-    cache = JSONFileCache(name="transaction_data.json")
-    data_list = data
-    for item in data_list:
-        try:
-            created_at_dt = datetime.strptime(item["created_at"], "%Y-%m-%dT%H:%M:%S.%f%z")
-
-            if start_of_week <= created_at_dt < end_of_week:
-                items_this_week.append(item)
-
-        except ValueError as e:
-            print(f"Skipping item {item.get('id', 'N/A')} due to parsing error: {e}")
-    
     log.debug(items_this_week)
-    cache.save(items_this_week)
+    return items_this_week
 
 
 
 
 if __name__ == "__main__":
     # get_acces_token()
-    get_transaction_data()
+    # get_transaction_data()
+    get_current_week_data()
