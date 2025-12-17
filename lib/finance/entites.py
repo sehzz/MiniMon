@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel
 from enum import Enum
@@ -26,18 +25,6 @@ class Category(int, Enum):
     OFFICE_BUSINESS = 6
     OTHERS = 7
     SUBSCRIPTIONS = 8
-
-class GrocerySubCategory(int, Enum):
-    """
-    Different subcategories of groceries.
-
-    Possible values:
-    - LIDL: LIDL.
-    - KAUFLAND: Kaufland.
-    - ALDI: Aldi.
-    - PENNY: Penny.
-    - REWE: Rewe.
-    """
     LIDL = 8
     KAUFLAND = 9
     ALDI = 10
