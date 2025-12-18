@@ -8,11 +8,11 @@ from config import RESOURSES_DIR
 from lib.utils.log import logger
 
 log = logger.get_logger()
-
-KEY_TIME_THRESHOLD_MINUTES = 30
 CACHE_TIME_THRESHOLD_HOURS = 24
 
 class JSONFileCache(BaseModel):
+    """Class to handle caching of JSON data to files with timestamp validation."""
+
     name: str
     file_path: Optional[Path] = None
 
@@ -32,8 +32,6 @@ class JSONFileCache(BaseModel):
         file_dt_utc = datetime.fromisoformat(cache_ts).replace(tzinfo=timezone.utc)
 
         threshold = timedelta(hours=CACHE_TIME_THRESHOLD_HOURS)
-        if self.is_key:
-            threshold = timedelta(minutes=KEY_TIME_THRESHOLD_MINUTES)
 
         if datetime.now(timezone.utc) - file_dt_utc < threshold:
             log.info(f"Cache '{self.name}' is valid. Reading from {self.path}")
