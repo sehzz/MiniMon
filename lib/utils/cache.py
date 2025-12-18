@@ -1,9 +1,10 @@
 import json
+from typing import Optional
 
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from pydantic import BaseModel
-from config import KEY_DIR, RESOURSES_DIR
+from config import RESOURSES_DIR
 from lib.utils.log import logger
 
 log = logger.get_logger()
@@ -13,13 +14,13 @@ CACHE_TIME_THRESHOLD_HOURS = 24
 
 class JSONFileCache(BaseModel):
     name: str
-    is_key: bool = False
+    file_path: Optional[Path] = None
 
     @property
     def path(self) -> Path:
         """Return the full path to the cache file based on whether it's a key or not."""
 
-        base_dir = KEY_DIR if self.is_key else RESOURSES_DIR
+        base_dir =  self.file_path or RESOURSES_DIR
         return base_dir.joinpath(self.name)
 
     @property
@@ -42,6 +43,16 @@ class JSONFileCache(BaseModel):
         return False
     
     def save(self, data, save_raw: bool = False) -> None:
+        """
+        Save data to JSON cache file.
+
+        Args:
+            data (dict): Data to be cached.
+            save_raw (bool): If True, saves data as is without wrapping in timestamp.
+        
+        Returns:
+            None
+        """
         path = self.path
         
         if save_raw:

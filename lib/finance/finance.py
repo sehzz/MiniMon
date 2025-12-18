@@ -6,13 +6,14 @@ from lib.finance.entites import Transaction
 from lib.utils.connectors import URLCaller
 from lib.utils.cache import JSONFileCache
 from lib.utils.environment import get_conf_for, is_server
+from lib.utils.token_handler import get_token_from_cache, save_token_to_file
 from config import KEY_DIR
 from lib.utils.log import logger
 
 log = logger.get_logger()
 
 MONMINI_TOKEN_PATH = KEY_DIR.joinpath("monmimi_access_token_60_min")
-MONMINI_TOKEN_KEY = "monmimi_access_token_60_min"
+MONMINI_TOKEN_KEY = "monmimi_access_token"
 
 
 def get_acces_token() -> str:
@@ -22,10 +23,11 @@ def get_acces_token() -> str:
     Returns:
         str: Access token.
     """
-    cache = JSONFileCache(name=MONMINI_TOKEN_KEY, is_key=True)
-    if cache.is_valid:
-        token_data = cache.retreive().get("data")
-        return token_data
+    if get_token_from_cache(MONMINI_TOKEN_KEY):
+        log.debug("Using cached access token.")
+        return get_token_from_cache(MONMINI_TOKEN_KEY)
+
+    log.debug("Fetching new access token from Supabase.")
 
     conf = get_conf_for("supabase")
     base_url = conf.get("base_url")
@@ -49,7 +51,9 @@ def get_acces_token() -> str:
     url_caller = URLCaller(headers=headers)
     result = url_caller.perform_single_call(url=url, verb="post", json= body)
     data = result.json
-    cache.save(data["access_token"])
+    token = data.get("access_token")
+
+    save_token_to_file(MONMINI_TOKEN_KEY, 60 * 60, token)
     
     return data["access_token"]
 
@@ -109,6 +113,6 @@ def get_current_week_data():
    
 
 if __name__ == "__main__":
-    # get_acces_token()
+    get_acces_token()
     # get_transaction_data()
     # get_current_week_data()
