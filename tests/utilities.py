@@ -2,10 +2,11 @@ import inspect
 import json
 from pathlib import Path
 import tempfile
+import pytest
 from unittest.mock import patch
 
 from pydantic import BaseModel, StrictBytes, StrictStr
-from typing import List, Optional, Union
+from typing import Union
 from fastapi import status as http_status
 
 
@@ -46,9 +47,7 @@ class HCPyTest:
             )
             raise AttributeError(msg)
         
-        # self._tmp_dir = tempfile.TemporaryDirectory()
         self._tmp = tempfile.TemporaryDirectory()
-        # self._tmp_dir = Path(self._tmp_dir.name)
         self._tmp_dir = Path(self._tmp.name)
         self.patches = {}
         self.mocks = {}
@@ -70,3 +69,13 @@ class HCPyTest:
         for p in self.patches.values():
             p.stop()
             
+    @pytest.fixture
+    def log(self):
+        module = inspect.getmodule(self)
+        target_lib = getattr(self, "TESTED_LIB", None) or getattr(module, "LIB_PATH", None)
+
+        if not target_lib:
+            pytest.fail("Could not determine LIB_PATH for the 'log' fixture.")
+        
+        with patch(f"{target_lib}.log") as mock_logger:
+            yield mock_logger

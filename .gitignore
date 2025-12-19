@@ -3,3 +3,4 @@ resources/*
 app.log
 .vscode/
 **/__pycache__
+.coverage
