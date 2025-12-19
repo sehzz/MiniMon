@@ -90,7 +90,7 @@ def save_token_to_file(token_name: str, ttl_seconds: int, token: str, token_dir:
     
     except Exception as e:
         log.error(f"Failed to write token for {token_name}: {e}")
-        if temp_path.exist():
+        if temp_path.exists():
             temp_path.unlink()
 
 
@@ -112,7 +112,7 @@ def is_token_file_valid(token_file: Path) -> bool:
         return False 
     
 
-if __name__ == "__main__":
+if __name__ == "__main__":  #pragma: no cover
     save_token_to_file("example_app", 60, "sample_token_value")
     token = get_token_from_cache("example_app")
     print(f"Retrieved token: {token}")

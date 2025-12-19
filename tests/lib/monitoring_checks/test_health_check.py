@@ -5,7 +5,7 @@ from tests.lib.factories.faktory import URLCallerResultFactory
 from tests.utilities import HCPyTest
 from fastapi import status as http_status
 
-LIB_PATH = "lib.monitors.health_check"
+LIB_PATH = "lib.monitoring_checks.health_check"
 
 
 class TestHealthCheck(HCPyTest):
