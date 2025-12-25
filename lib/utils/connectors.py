@@ -47,7 +47,7 @@ class URLCaller(BaseModel):
     def perform_single_call(
             self,
             url: str,
-            verb: str,
+            verb: Optional[str] = "get",
             **extra,
     )-> URLCallerResult:
         """
@@ -57,7 +57,7 @@ class URLCaller(BaseModel):
             url (str): 
                 The URL to call.
             verb (str):
-                The HTTP verb to use (e.g., 'get', 'post', 'put').
+                The HTTP verb to use (e.g., 'get', 'post', 'put'). Defaults to 'get'.
             extra: 
                 Additional arguments to pass to the request function.
         
@@ -78,6 +78,8 @@ class URLCaller(BaseModel):
             fun = requests.post
         elif verb == "put":
             fun = requests.put
+        elif verb == "delete":
+            fun = requests.delete
         else:
             raise ValueError(f"Unsupported HTTP verb: {verb}")
         

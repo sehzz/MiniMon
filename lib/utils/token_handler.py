@@ -30,6 +30,7 @@ def get_token_from_cache(token_name:str, token_dir: Optional[Path] = None) -> Op
         token_file.unlink(missing_ok=True)
         return None
     
+    log.info(f"Using cached token for {token_name} from {token_file}")
     return token_file.read_text(encoding="utf-8")
 
 
