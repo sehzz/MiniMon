@@ -137,15 +137,13 @@ class Database():
         url = f"{base_url}/rest/v1/{table_name}"
 
         try:
-            result = self.url_caller.perform_single_call(url=url, headers=headers, verb="post", json=data)
+            self.url_caller.perform_single_call(url=url, headers=headers, verb="post", json=data)
 
         except Exception as e:
             log.error(f"Data addition request failed: {e}")
             return None
         
-        response_data = result.json
-        log.info(f"Data added to {table_name}: {response_data}")
-        return response_data
+        log.info(f"Data added to {table_name}")
 
     def delete_data_from_table(self, table_name: str, id: int):
         """
